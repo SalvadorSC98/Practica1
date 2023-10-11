@@ -14,87 +14,81 @@ import com.google.android.material.textfield.TextInputEditText
 
 class MainActivity : AppCompatActivity() {
 
-    private var correoRecordado: String? = null
-    private var contrasenaRecordada: String? = null
+    private var emailRemembered: String? = null
+    private var passRemembered: String? = null
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
-        val imageView = findViewById<ImageView>(R.id.imageView)
+        val closeButton = findViewById<ImageView>(R.id.imageView)
 
-        imageView.setOnClickListener {
+        closeButton.setOnClickListener {
             finish()
         }
 
-        val texto1 = findViewById<TextInputEditText>(R.id.texto1)
-        val texto2 = findViewById<TextInputEditText>(R.id.texto2)
-        val switchRecordar = findViewById<Switch>(R.id.switch1)
+        val emailText = findViewById<TextInputEditText>(R.id.texto1)
+        val passText = findViewById<TextInputEditText>(R.id.texto2)
+        val switchRemember = findViewById<Switch>(R.id.switch1)
 
         val button = findViewById<Button>(R.id.button)
         button.setBackgroundColor(Color.LTGRAY)
 
-        texto1.addTextChangedListener(object : TextWatcher {
+        emailText.addTextChangedListener(object : TextWatcher {
             override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
 
             override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {}
 
             override fun afterTextChanged(s: Editable?) {
-                actualizarColorBoton(texto1, texto2, button)
+                changeButtonColor(emailText, passText, button)
             }
         })
 
 
-        texto2.addTextChangedListener(object : TextWatcher {
+        passText.addTextChangedListener(object : TextWatcher {
             override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
 
             override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {}
 
             override fun afterTextChanged(s: Editable?) {
-                actualizarColorBoton(texto1, texto2, button)
+                changeButtonColor(emailText, passText, button)
             }
         })
 
+        
+        val user1 = User("Usuario1", "usuario1@example.com", "Contra1", R.drawable.imagen1)
+        val user2 = User("Usuario2", "usuario2@example.com", "contrasena2", R.drawable.imagen2)
 
-        // Crear dos objetos Persona
-        val usuario1 = Usuario("Usuario1", "usuario1@example.com", "contrasena1", R.drawable.imagen1)
-        val usuario2 = Usuario("Usuario2", "usuario2@example.com", "contrasena2", R.drawable.imagen2)
-
-        val listaUsuarios = mutableListOf(
-            usuario1,
-            usuario2
+        val userList = mutableListOf(
+            user1,
+            user2
         )
 
 
         button.setOnClickListener {
-            val email = texto1.text.toString()
-            val contrasena = texto2.text.toString()
+            val email = emailText.text.toString()
+            val password = passText.text.toString()
 
-            switchRecordar.setOnCheckedChangeListener { _, isChecked ->
+            switchRemember.setOnCheckedChangeListener { _, isChecked ->
                 if (isChecked) {
-                    correoRecordado = texto1.text.toString()
-                    contrasenaRecordada = texto2.text.toString()
+                    emailRemembered = emailText.text.toString()
+                    passRemembered = passText.text.toString()
                 } else {
-                    correoRecordado = null
-                    contrasenaRecordada = null
+                    emailRemembered = null
+                    passRemembered = null
                 }
             }
 
-            if (validarCredenciales(email, contrasena, listaUsuarios)) {
-                // Credenciales correctas, mostrar mensaje de éxito
+            if (validate(email, password, userList)) {
                 val intent = Intent(this, WelcomeActivity::class.java)
                 startActivity(intent)
             } else {
-                // Credenciales incorrectas, mostrar mensaje de error
                 Toast.makeText(this, "Acceso denegado", Toast.LENGTH_SHORT).show()
             }
         }
 
-
-
-
     }
 
-    private fun actualizarColorBoton(texto1: TextInputEditText, texto2: TextInputEditText, button: Button) {
+    private fun changeButtonColor(texto1: TextInputEditText, texto2: TextInputEditText, button: Button) {
         if (texto1.text.toString().isNotEmpty() && texto2.text.toString().isNotEmpty()) {
             button.isEnabled = true
             button.setBackgroundColor(0xFF5722)
@@ -105,14 +99,29 @@ class MainActivity : AppCompatActivity() {
     }
 
 
-    fun validarCredenciales(email: String, contrasena: String, listaUsuarios: List<Usuario>): Boolean {
-        for (usuario in listaUsuarios) {
-            if (usuario.email == email && usuario.contrasena == contrasena) {
-                return true // Credenciales correctas
+    fun validate(email: String, password: String, userList: List<User>): Boolean {
+        for (user in userList) {
+            if (user.email == email) {
+                if (user.password == password && passwordRules(password)) {
+                    return true
+                }
             }
         }
-        return false // Credenciales incorrectas
+        return false
     }
+
+    fun passwordRules(password: String): Boolean {
+        if (password.length < 6 || password.length > 8) {
+            return false
+        }
+
+        val haveCaps = password.any { it.isUpperCase() }
+        val haveLowers = password.any { it.isLowerCase() }
+        val haveNumbers = password.any { it.isDigit() }
+
+        return haveCaps && haveLowers && haveNumbers
+    }
+
 
 
 }
