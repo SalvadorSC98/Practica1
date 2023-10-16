@@ -67,25 +67,34 @@ class MainActivity : AppCompatActivity() {
         button.setOnClickListener {
             val email = emailText.text.toString()
             val password = passText.text.toString()
-
-            switchRemember.setOnCheckedChangeListener { _, isChecked ->
-                if (isChecked) {
-                    emailRemembered = emailText.text.toString()
-                    passRemembered = passText.text.toString()
-                } else {
-                    emailRemembered = null
-                    passRemembered = null
-                }
-            }
+            var switchChecker = false
 
             if (validate(email, password, userList)) {
+                val user = findUserByEmailAndPassword(email, password, userList)
                 val intent = Intent(this, WelcomeActivity::class.java)
-                startActivity(intent)
+                if (switchRemember.isChecked) {
+                    switchChecker = true
+                    intent.putExtra("user", user)
+                    intent.putExtra("checker", switchChecker)
+                    startActivity(intent)
+                } else {
+                    intent.putExtra("user", user)
+                    intent.putExtra("checker", switchChecker)
+                    startActivity(intent)
+                }
+
             } else {
                 Toast.makeText(this, "Acceso denegado", Toast.LENGTH_SHORT).show()
             }
         }
 
+        val intent2 = intent
+        if (intent2.hasExtra("email") && intent2.hasExtra("pass")) {
+            val emailIntent = intent2.getStringExtra("email")
+            val passIntent = intent2.getStringExtra("pass")
+            emailText.setText(emailIntent)
+            passText.setText(passIntent)
+        }
     }
 
     private fun changeButtonColor(texto1: TextInputEditText, texto2: TextInputEditText, button: Button) {
@@ -122,6 +131,15 @@ class MainActivity : AppCompatActivity() {
         return haveCaps && haveLowers && haveNumbers
     }
 
+
+    private fun findUserByEmailAndPassword(email: String, password: String, userList: List<User>): User? {
+        for (user in userList) {
+            if (user.email == email && user.password == password) {
+                return user
+            }
+        }
+        return null
+    }
 
 
 }
