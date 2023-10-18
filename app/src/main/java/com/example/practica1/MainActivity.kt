@@ -8,29 +8,28 @@ import android.text.Editable
 import android.text.TextWatcher
 import android.widget.Button
 import android.widget.ImageView
-import android.widget.Switch
 import android.widget.Toast
+import androidx.appcompat.widget.SwitchCompat
 import com.google.android.material.textfield.TextInputEditText
 
 class MainActivity : AppCompatActivity() {
 
-    private var emailRemembered: String? = null
-    private var passRemembered: String? = null
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
-        val closeButton = findViewById<ImageView>(R.id.imageView)
+        val closeButton = findViewById<ImageView>(R.id.closeButton)
 
         closeButton.setOnClickListener {
             finish()
         }
 
-        val emailText = findViewById<TextInputEditText>(R.id.texto1)
-        val passText = findViewById<TextInputEditText>(R.id.texto2)
-        val switchRemember = findViewById<Switch>(R.id.switch1)
+        val emailText = findViewById<TextInputEditText>(R.id.emailText)
+        val passText = findViewById<TextInputEditText>(R.id.passText)
+        val switchRemember = findViewById<SwitchCompat>(R.id.rememberSwitch)
 
-        val button = findViewById<Button>(R.id.button)
+
+        val button = findViewById<Button>(R.id.loginButton)
         button.setBackgroundColor(Color.LTGRAY)
 
         emailText.addTextChangedListener(object : TextWatcher {
@@ -54,44 +53,38 @@ class MainActivity : AppCompatActivity() {
             }
         })
 
-        
-        val user1 = User("Usuario1", "usuario1@example.com", "Contra1", R.drawable.imagen1)
-        val user2 = User("Usuario2", "usuario2@example.com", "contrasena2", R.drawable.imagen2)
 
-        val userList = mutableListOf(
-            user1,
-            user2
-        )
+        val userList = UsersList.users
+        val extras = Extras
 
 
         button.setOnClickListener {
             val email = emailText.text.toString()
             val password = passText.text.toString()
-            var switchChecker = false
 
             if (validate(email, password, userList)) {
                 val user = findUserByEmailAndPassword(email, password, userList)
                 val intent = Intent(this, WelcomeActivity::class.java)
                 if (switchRemember.isChecked) {
-                    switchChecker = true
-                    intent.putExtra("user", user)
-                    intent.putExtra("checker", switchChecker)
+                    intent.putExtra(extras.extra_user, user)
+                    intent.putExtra(extras.extra_checker, switchRemember.isChecked)
                     startActivity(intent)
                 } else {
-                    intent.putExtra("user", user)
-                    intent.putExtra("checker", switchChecker)
+                    intent.putExtra(extras.extra_user, user)
+                    intent.putExtra(extras.extra_checker, switchRemember.isChecked)
                     startActivity(intent)
                 }
 
             } else {
-                Toast.makeText(this, "Acceso denegado", Toast.LENGTH_SHORT).show()
+                Toast.makeText(this, getString(R.string.acceso_denegado), Toast.LENGTH_SHORT).show()
             }
+            finish()
         }
 
         val intent2 = intent
-        if (intent2.hasExtra("email") && intent2.hasExtra("pass")) {
-            val emailIntent = intent2.getStringExtra("email")
-            val passIntent = intent2.getStringExtra("pass")
+        if (intent2.hasExtra(extras.extra_email) && intent2.hasExtra(extras.extra_pass)) {
+            val emailIntent = intent2.getStringExtra(extras.extra_email)
+            val passIntent = intent2.getStringExtra(extras.extra_pass)
             emailText.setText(emailIntent)
             passText.setText(passIntent)
         }
@@ -107,19 +100,16 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-
-    fun validate(email: String, password: String, userList: List<User>): Boolean {
-        for (user in userList) {
-            if (user.email == email) {
-                if (user.password == password && passwordRules(password)) {
-                    return true
-                }
-            }
+    private fun validate(email: String, password: String, userList: List<User>): Boolean {
+        val userWithEmail = userList.firstOrNull { it.email == email && it.password == password}
+        return if (userWithEmail != null ) {
+            passwordRules(password)
+        } else {
+            false
         }
-        return false
     }
 
-    fun passwordRules(password: String): Boolean {
+    private fun passwordRules(password: String): Boolean {
         if (password.length < 6 || password.length > 8) {
             return false
         }
